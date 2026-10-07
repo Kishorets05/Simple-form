@@ -1,0 +1,110 @@
+body {
+    font-family: Arial, sans-serif;
+
+    background-color: #f4f4f4;
+
+    margin: 0;
+    padding: 30px;
+}
+
+h1 {
+    text-align: center;
+}
+
+form {
+    background-color: white;
+
+    max-width: 500px;
+
+    margin: 20px auto;
+
+    padding: 20px;
+
+    border-radius: 8px;
+}
+
+input,
+select {
+    width: 100%;
+
+    padding: 10px;
+
+    margin: 8px 0;
+
+    box-sizing: border-box;
+}
+
+button {
+    padding: 10px 20px;
+
+    margin-top: 10px;
+
+    border: none;
+
+    background-color: #2563eb;
+
+    color: white;
+
+    cursor: pointer;
+
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #1d4ed8;
+}
+
+.tabs {
+    text-align: center;
+
+    margin-bottom: 20px;
+}
+
+.tabs button {
+    margin: 5px;
+}
+
+.hidden {
+    display: none;
+}
+
+.profile {
+    background-color: white;
+
+    max-width: 700px;
+
+    margin: auto;
+
+    padding: 25px;
+
+    border-radius: 8px;
+}
+
+.profile img {
+    display: block;
+
+    margin: 10px 0;
+}
+
+.profile audio,
+.profile video {
+    display: block;
+
+    margin: 15px 0;
+
+    max-width: 100%;
+}
+
+.message {
+    text-align: center;
+
+    color: green;
+}
+
+.delete {
+    background-color: red;
+}
+
+.delete:hover {
+    background-color: darkred;
+}
