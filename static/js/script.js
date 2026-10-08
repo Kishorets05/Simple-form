@@ -1,24 +1,20 @@
 function showRegister() {
 
     document
-        .getElementById("register")
-        .classList.remove("hidden");
+        .getElementById("register");
 
     document
-        .getElementById("login")
-        .classList.add("hidden");
+        .getElementById("login");
 }
 
 
 function showLogin() {
 
     document
-        .getElementById("login")
-        .classList.remove("hidden");
+        .getElementById("login");
 
     document
-        .getElementById("register")
-        .classList.add("hidden");
+        .getElementById("register");
 }
 
 
