@@ -1,26 +1,19 @@
 function showRegister() {
+    document.getElementById("registerSection").classList.remove("hidden");
+    document.getElementById("loginSection").classList.add("hidden");
 
-    document
-        .getElementById("register");
-
-    document
-        .getElementById("login");
+    document.getElementById("tabRegisterBtn").classList.add("active");
+    document.getElementById("tabLoginBtn").classList.remove("active");
 }
-
 
 function showLogin() {
+    document.getElementById("registerSection").classList.add("hidden");
+    document.getElementById("loginSection").classList.remove("hidden");
 
-    document
-        .getElementById("login");
-
-    document
-        .getElementById("register");
+    document.getElementById("tabRegisterBtn").classList.remove("active");
+    document.getElementById("tabLoginBtn").classList.add("active");
 }
 
-
 function confirmDelete() {
-
-    return confirm(
-        "Are you sure you want to delete your account?"
-    );
+    return confirm("Are you sure you want to delete your account?");
 }
