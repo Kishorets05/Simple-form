@@ -1,7 +1,7 @@
 import os
 import time
 import pymysql
-
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import (
     Flask,
     render_template,
@@ -56,7 +56,10 @@ def register():
 
     name = request.form.get('name')
     email = request.form.get('email')
+
     password = request.form.get('password')
+    password = generate_password_hash(password)
+
     phone = request.form.get('phone')
     gender = request.form.get('gender')
     course = request.form.get('course')
@@ -139,9 +142,8 @@ def login():
         SELECT *
         FROM registrations
         WHERE email = %s
-        AND password = %s
         """,
-        (email, password)
+        (email,)
     )
 
     user = cursor.fetchone()
@@ -149,7 +151,7 @@ def login():
     cursor.close()
     connection.close()
 
-    if user:
+    if user and check_password_hash(user['password'], password):
 
         session['user_id'] = user['id']
 
@@ -176,7 +178,11 @@ def update():
 
     name = request.form.get('name')
     email = request.form.get('email')
-    password = request.form.get('password')
+    new_password = request.form.get('password')
+    if new_password:
+        password = generate_password_hash(new_password)
+    else:
+        password = user['password']
     phone = request.form.get('phone')
     gender = request.form.get('gender')
     course = request.form.get('course')
