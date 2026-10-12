@@ -1,4 +1,3 @@
-```python
 import io
 from unittest.mock import MagicMock, patch
 
@@ -13,12 +12,12 @@ def client():
 
     app_module.app.config["TESTING"] = True
     app_module.app.config["SECRET_KEY"] = "test-secret-key"
+    app_module.app.config["WTF_CSRF_ENABLED"] = False
 
     with app_module.app.test_client() as client:
         with app_module.app.app_context():
             yield client
 
-ff
 def mock_db_connection():
     """Create a mocked MySQL connection and cursor."""
     connection = MagicMock()
@@ -66,7 +65,7 @@ def test_login_requires_valid_credentials(client):
 def test_login_with_correct_password(client):
     connection, cursor = mock_db_connection()
 
-    hashed_password = generatetf_password_hash("TestPassword123!")
+    hashed_password = generate_password_hash("TestPassword123!")
 
     cursor.fetchone.return_value = {
         "id": 1,
@@ -155,4 +154,90 @@ def test_password_hashing():
     assert hashed_password != password
     assert check_password_hash(hashed_password, password)
     assert not check_password_hash(hashed_password, "WrongPassword123!")
-```
+
+
+def test_update_profile_preserves_password_when_left_blank(client):
+    connection, cursor = mock_db_connection()
+    original_hash = generate_password_hash("OriginalPassword123!")
+
+    cursor.fetchone.side_effect = [
+        # 1. SELECT * FROM registrations WHERE id = %s
+        {
+            "id": 1,
+            "name": "Original Name",
+            "email": "orig@example.com",
+            "password": original_hash,
+            "photo": None,
+            "audio": None,
+            "video": None,
+            "document": None
+        },
+        # 2. SELECT id FROM registrations WHERE email = %s AND id != %s
+        None
+    ]
+
+    with client.session_transaction() as session:
+        session["user_id"] = 1
+
+    with patch("app.get_db_connection", return_value=connection):
+        response = client.post(
+            "/update",
+            data={
+                "name": "Updated Name",
+                "email": "updated@example.com",
+                "password": ""
+            },
+            follow_redirects=False
+        )
+
+    assert response.status_code == 302
+    # Verify the execute query updated with the original_hash preserved
+    update_call = [call for call in cursor.execute.call_args_list if "UPDATE registrations" in str(call)]
+    assert len(update_call) == 1
+    # Check that the password parameter passed to UPDATE was the original_hash
+    args, kwargs = update_call[0]
+    sql_params = args[1]
+    assert sql_params[2] == original_hash  # password field should be untouched
+
+
+def test_update_profile_preserves_password_even_if_hash_submitted(client):
+    connection, cursor = mock_db_connection()
+    original_hash = generate_password_hash("OriginalPassword123!")
+
+    cursor.fetchone.side_effect = [
+        # 1. SELECT * FROM registrations WHERE id = %s
+        {
+            "id": 1,
+            "name": "Original Name",
+            "email": "orig@example.com",
+            "password": original_hash,
+            "photo": None,
+            "audio": None,
+            "video": None,
+            "document": None
+        },
+        # 2. SELECT id FROM registrations WHERE email = %s AND id != %s
+        None
+    ]
+
+    with client.session_transaction() as session:
+        session["user_id"] = 1
+
+    with patch("app.get_db_connection", return_value=connection):
+        response = client.post(
+            "/update",
+            data={
+                "name": "Updated Name",
+                "email": "updated@example.com",
+                "password": original_hash  # simulating old bug where template rendered hash
+            },
+            follow_redirects=False
+        )
+
+    assert response.status_code == 302
+    update_call = [call for call in cursor.execute.call_args_list if "UPDATE registrations" in str(call)]
+    assert len(update_call) == 1
+    args, kwargs = update_call[0]
+    sql_params = args[1]
+    # Check that password parameter was NOT double-hashed
+    assert sql_params[2] == original_hash
