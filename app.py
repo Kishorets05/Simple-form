@@ -2,6 +2,7 @@ import os
 import time
 import pymysql
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_wtf.csrf import CSRFProtect
 from flask import (
     Flask,
     render_template,
@@ -18,7 +19,9 @@ from utils import save_file, UPLOAD_FOLDER
 
 app = Flask(__name__)
 
-app.secret_key = 'simple_registration_secret_key'
+app.secret_key = os.environ.get("SECRET_KEY")
+
+csrf = CSRFProtect(app)
 
 
 # HOME PAGE
