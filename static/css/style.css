@@ -266,3 +266,29 @@ button[type="submit"]:hover,
 .hidden {
     display: none;
 }
+
+
+.user-details {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.user-details p {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 8px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.user-details strong {
+    display: inline-block;
+    min-width: 80px;
+    color: #4b5563;
+}
+
