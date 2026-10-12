@@ -5,3 +5,4 @@ gunicorn
 pytest
 ruff
 Flask-WTF
+boto3
