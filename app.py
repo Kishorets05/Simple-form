@@ -105,6 +105,14 @@ def register():
     try:
 
         cursor.execute(
+            "SELECT id FROM registrations WHERE email = %s",
+            (email,)
+        )
+        if cursor.fetchone():
+            flash("Email already exists!")
+            return redirect("/")
+
+        cursor.execute(
             """
             INSERT INTO registrations
             (
@@ -185,24 +193,23 @@ def login():
             (email,)
         )
 
-        user = cursor.fetchone()
+        users = cursor.fetchall()
 
     finally:
         cursor.close()
         connection.close()
 
     # Verify the submitted password against the stored hash.
-    if user and check_password_hash(
-        user["password"],
-        raw_password
-    ):
+    matched_user = None
+    for u in users:
+        if check_password_hash(u["password"], raw_password):
+            matched_user = u
+            break
 
-        session["user_id"] = user["id"]
-
+    if matched_user:
+        session["user_id"] = matched_user["id"]
         flash("Login successful!")
-
     else:
-
         flash("Invalid email or password!")
 
     return redirect("/")
@@ -241,14 +248,30 @@ def update():
 
         name = request.form.get("name", "").strip()
         email = request.form.get("email", "").strip()
-        new_password = request.form.get("password", "")
+        new_password = request.form.get("password", "").strip()
+
+        if not name or not email:
+            flash("Name and email are required!")
+            return redirect("/")
+
+        cursor.execute(
+            "SELECT id FROM registrations WHERE email = %s AND id != %s",
+            (email, user_id)
+        )
+        if cursor.fetchone():
+            flash("That email address is already in use.")
+            return redirect("/")
 
         phone = request.form.get("phone", "").strip()
         gender = request.form.get("gender")
         course = request.form.get("course")
 
-        # Preserve the existing hash unless a new password is provided.
-        if new_password:
+        # Preserve the existing hash unless a new plaintext password is provided.
+        if (
+            new_password
+            and new_password != user["password"]
+            and not new_password.startswith(("scrypt:", "pbkdf2:", "argon2:"))
+        ):
             password = generate_password_hash(new_password)
         else:
             password = user["password"]
