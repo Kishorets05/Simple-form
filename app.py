@@ -328,7 +328,9 @@ if __name__ == '__main__':
 
     init_db()
 
+  debug_mode = os.getenv("FLASK_DEBUG", "0") == "1"
+
     app.run(
-        debug=True,
+        debug=debug_mode,
         port=5000
     )
