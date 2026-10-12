@@ -1,0 +1,6 @@
+Flask
+PyMySQL
+Werkzeug
+gunicorn
+pytest
+ruff
