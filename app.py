@@ -1,4 +1,5 @@
 import os
+import traceback
 
 import pymysql
 from flask import (
@@ -40,6 +41,18 @@ csrf = CSRFProtect(app)
 
 
 # =========================
+# GLOBAL ERROR HANDLER
+# =========================
+
+@app.errorhandler(500)
+def handle_internal_error(e):
+    print("500 Internal Server Error encountered:")
+    traceback.print_exc()
+    flash("An unexpected server error occurred. Please check database and S3 configurations.")
+    return redirect("/")
+
+
+# =========================
 # HOME PAGE
 # =========================
 
@@ -49,22 +62,28 @@ def index():
     user = None
 
     if user_id:
-        connection = get_db_connection()
-        cursor = connection.cursor()
-
         try:
-            cursor.execute(
-                "SELECT * FROM registrations WHERE id = %s",
-                (user_id,),
-            )
-            user = cursor.fetchone()
-        finally:
-            cursor.close()
-            connection.close()
+            connection = get_db_connection()
+            cursor = connection.cursor()
 
-        # Clear the session if the account no longer exists in the database.
-        if not user:
+            try:
+                cursor.execute(
+                    "SELECT * FROM registrations WHERE id = %s",
+                    (user_id,),
+                )
+                user = cursor.fetchone()
+            finally:
+                cursor.close()
+                connection.close()
+
+            # Clear the session if the account no longer exists in the database.
+            if not user:
+                session.pop("user_id", None)
+
+        except Exception as e:
+            print(f"Database error on index page: {e}")
             session.pop("user_id", None)
+            flash(f"Database error: {e}")
 
     return render_template(
         "index.html",
@@ -91,8 +110,13 @@ def register():
         return redirect("/")
 
     # Check for existing email before uploading files to avoid orphaned S3 objects
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+    except Exception as e:
+        print(f"Database connection error during registration: {e}")
+        flash(f"Database connection error: {e}. If running on Render, verify your MySQL environment variables.")
+        return redirect("/")
 
     try:
         cursor.execute(
@@ -102,6 +126,10 @@ def register():
         if cursor.fetchone():
             flash("Email already exists!")
             return redirect("/")
+    except Exception as e:
+        print(f"Database query error during registration: {e}")
+        flash(f"Database error: {e}")
+        return redirect("/")
     finally:
         cursor.close()
         connection.close()
@@ -119,8 +147,12 @@ def register():
         flash(f"File upload failed: {str(e)}")
         return redirect("/")
 
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+    except Exception as e:
+        flash(f"Database connection error: {e}")
+        return redirect("/")
 
     try:
         cursor.execute(
@@ -164,6 +196,9 @@ def register():
 
     except pymysql.err.IntegrityError:
         flash("Email already exists!")
+    except Exception as e:
+        print(f"Database insert error: {e}")
+        flash(f"Database error: {e}")
 
     finally:
         cursor.close()
@@ -185,8 +220,13 @@ def login():
         flash("Please enter your email and password!")
         return redirect("/")
 
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+    except Exception as e:
+        print(f"Database connection error during login: {e}")
+        flash(f"Database connection error: {e}. If hosting on Render, please verify your MySQL environment variables.")
+        return redirect("/")
 
     try:
         cursor.execute(
@@ -198,6 +238,10 @@ def login():
             (email,),
         )
         users = cursor.fetchall()
+    except Exception as e:
+        print(f"Database query error during login: {e}")
+        flash(f"Database query error: {e}. Please ensure the registrations table exists.")
+        return redirect("/")
     finally:
         cursor.close()
         connection.close()
@@ -205,9 +249,12 @@ def login():
     # Verify the submitted password against the stored hash
     matched_user = None
     for u in users:
-        if check_password_hash(u["password"], raw_password):
-            matched_user = u
-            break
+        try:
+            if u.get("password") and check_password_hash(u["password"], raw_password):
+                matched_user = u
+                break
+        except Exception:
+            continue
 
     if matched_user:
         session["user_id"] = matched_user["id"]
@@ -230,8 +277,12 @@ def update():
         flash("Please login first.")
         return redirect("/")
 
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+    except Exception as e:
+        flash(f"Database connection error: {e}")
+        return redirect("/")
 
     try:
         cursor.execute(
@@ -336,6 +387,9 @@ def update():
 
     except pymysql.err.IntegrityError:
         flash("That email address is already in use.")
+    except Exception as e:
+        print(f"Database error during update: {e}")
+        flash(f"Database error: {e}")
 
     finally:
         cursor.close()
@@ -356,8 +410,12 @@ def delete():
         flash("Please login first.")
         return redirect("/")
 
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+    except Exception as e:
+        flash(f"Database connection error: {e}")
+        return redirect("/")
 
     try:
         # Retrieve user file keys before deleting the record
@@ -385,6 +443,10 @@ def delete():
             delete_files_from_s3(file_keys)
 
         flash("Account deleted successfully!")
+
+    except Exception as e:
+        print(f"Error during account deletion: {e}")
+        flash(f"Error deleting account: {e}")
 
     finally:
         cursor.close()
@@ -421,8 +483,12 @@ def uploaded_file(filename):
         flash("Please login to access files.")
         return redirect("/")
 
-    connection = get_db_connection()
-    cursor = connection.cursor()
+    try:
+        connection = get_db_connection()
+        cursor = connection.cursor()
+    except Exception as e:
+        flash(f"Database connection error: {e}")
+        return redirect("/")
 
     try:
         cursor.execute(
@@ -430,6 +496,9 @@ def uploaded_file(filename):
             (user_id,),
         )
         user_record = cursor.fetchone()
+    except Exception as e:
+        flash(f"Database error: {e}")
+        return redirect("/")
     finally:
         cursor.close()
         connection.close()
