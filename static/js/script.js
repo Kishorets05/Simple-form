@@ -117,6 +117,19 @@ function password() {
 
 document.addEventListener("DOMContentLoaded", function () {
     password();
+
+    // Prevent rapid duplicate clicks from dispatching multiple simultaneous form requests
+    const forms = document.querySelectorAll("form");
+    forms.forEach(function (form) {
+        form.addEventListener("submit", function () {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn && !submitBtn.disabled) {
+                setTimeout(function () {
+                    submitBtn.disabled = true;
+                }, 0);
+            }
+        });
+    });
 });
 
 

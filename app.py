@@ -4,12 +4,21 @@ import traceback
 import pymysql
 from flask import (
     Flask,
-    flash,
+    flash as _flask_flash,
     redirect,
     render_template,
     request,
     session,
 )
+
+
+def flash(message, category="message"):
+    """
+    Synchronize flash notifications by clearing any lingering or stale
+    messages from the session before flashing the new notification.
+    """
+    session.pop("_flashes", None)
+    _flask_flash(message, category)
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import (
     check_password_hash,
