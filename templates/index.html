@@ -18,7 +18,7 @@
         {% with messages = get_flashed_messages() %}
             {% if messages %}
                 {% for message in messages %}
-                    <p class="message {% if 'fail' in message.lower() or 'invalid' in message.lower() or 'already' in message.lower() or 'error' in message.lower() %}error{% endif %}">
+                    <p class="message {% if 'fail' in message.lower() or 'invalid' in message.lower() or 'already' in message.lower() or 'error' in message.lower() or 'denied' in message.lower() %}error{% endif %}">
                         {{ message }}
                     </p>
                 {% endfor %}
@@ -45,6 +45,7 @@
 
                 <form action="/register" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div class="form-group">
                         <label for="reg-name">Name *</label>
                         <input type="text" id="reg-name" name="name" placeholder="Enter your name" required>
@@ -53,21 +54,17 @@
                     <div class="form-group">
                         <label for="reg-email">Email *</label>
                         <input type="email" id="reg-email" name="email" placeholder="Enter your email" required>
-                        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
                     </div>
 
                     <div class="form-group">
                         <label for="reg-password">Password *</label>
-                        <input type="password" id="reg-password" name="password" placeholder="Enter password" required   >
-                        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+                        <input type="password" id="reg-password" name="password" placeholder="Enter password" required>
                     </div>
 
                     <div class="form-group">
                         <label for="reg-phone">Phone *</label>
-                        <input type="text" id="reg-phone" name="phone" placeholder="Enter phone number" required pattern="[6-9][0-9]{9}" maxlength="10"  title="Enter exactly 10 digits" >
-                        <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+                        <input type="text" id="reg-phone" name="phone" placeholder="Enter phone number" required pattern="[6-9][0-9]{9}" maxlength="10" title="Enter exactly 10 digits">
                     </div>
-                    
 
                     <div class="form-group">
                         <label for="reg-gender">Gender</label>
@@ -115,6 +112,7 @@
 
                 <form action="/login" method="POST">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div class="form-group">
                         <label for="login-email">Email *</label>
                         <input type="email" id="login-email" name="email" placeholder="Enter your email" required>
@@ -142,17 +140,15 @@
                     <a href="/logout" class="btn-secondary">Logout</a>
                 </div>
 
-         
-        <h3>User Details</h3>
+                <h3>User Details</h3>
 
-        <div class="user-details">
-            <p><strong>Name:</strong> {{ user.name }}</p>
-            <p><strong>Email:</strong> {{ user.email }}</p>
-            <p><strong>Phone:</strong> {{ user.phone }}</p>
-            <p><strong>Gender:</strong> {{ user.gender }}</p>
-            <p><strong>Course:</strong> {{ user.course }}</p>
-        </div>
-
+                <div class="user-details">
+                    <p><strong>Name:</strong> {{ user.name }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Phone:</strong> {{ user.phone }}</p>
+                    <p><strong>Gender:</strong> {{ user.gender }}</p>
+                    <p><strong>Course:</strong> {{ user.course }}</p>
+                </div>
 
                 <h3>Uploaded Files</h3>
 
@@ -160,6 +156,10 @@
                     <div class="media-item">
                         <p>Photo:</p>
                         <img src="/uploads/{{ user.photo }}" alt="Profile Photo">
+                        <div>
+                            <a href="/uploads/{{ user.photo }}" target="_blank">View Photo</a> |
+                            <a href="/uploads/{{ user.photo }}?download=1">Download Photo</a>
+                        </div>
                     </div>
                 {% endif %}
 
@@ -168,7 +168,12 @@
                         <p>Audio:</p>
                         <audio controls>
                             <source src="/uploads/{{ user.audio }}">
+                            Your browser does not support the audio element.
                         </audio>
+                        <div>
+                            <a href="/uploads/{{ user.audio }}" target="_blank">Listen</a> |
+                            <a href="/uploads/{{ user.audio }}?download=1">Download Audio</a>
+                        </div>
                     </div>
                 {% endif %}
 
@@ -177,14 +182,20 @@
                         <p>Video:</p>
                         <video controls>
                             <source src="/uploads/{{ user.video }}">
+                            Your browser does not support the video element.
                         </video>
+                        <div>
+                            <a href="/uploads/{{ user.video }}" target="_blank">Watch</a> |
+                            <a href="/uploads/{{ user.video }}?download=1">Download Video</a>
+                        </div>
                     </div>
                 {% endif %}
 
                 {% if user.document %}
                     <div class="media-item">
                         <p>Document:</p>
-                        <a href="/uploads/{{ user.document }}" target="_blank">View Document</a>
+                        <a href="/uploads/{{ user.document }}" target="_blank">View Document</a> |
+                        <a href="/uploads/{{ user.document }}?download=1">Download Document</a>
                     </div>
                 {% endif %}
 
@@ -195,6 +206,7 @@
                 <h3>Update Details</h3>
                 <form action="/update" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
                     <div class="form-group">
                         <label for="up-name">Name</label>
                         <input type="text" id="up-name" name="name" value="{{ user.name }}" required>

@@ -6,3 +6,4 @@ pytest
 ruff
 Flask-WTF
 boto3
+cryptography
